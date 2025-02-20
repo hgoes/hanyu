@@ -1,12 +1,18 @@
-//go:generate go run ../cmd/gen-numbers
+// Handle numbers in chinese notation
 package numbers
 
+//go:generate go run ../cmd/gen-numbers
+
+// Parser can be used to convert numbers in chinese notation to
+// machine representation.
 type Parser struct {
 	value      int64
 	positional bool
 	digits     bool
 }
 
+// Consume parses another character and returns whether the result is
+// still valid.
 func (p *Parser) Consume(r rune) bool {
 	val, ok := All[r]
 	if !ok {
@@ -47,6 +53,7 @@ func (p *Parser) Consume(r rune) bool {
 	return true
 }
 
+// Value returns the currently parsed value
 func (p *Parser) Value() int64 {
 	return p.value
 }

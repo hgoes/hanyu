@@ -1,5 +1,6 @@
-//go:generate go run ../cmd/gen-dict
 package dict
+
+//go:generate go run ../cmd/gen-dict
 
 import (
 	_ "embed"
@@ -11,6 +12,9 @@ import (
 	"github.com/hgoes/hanyu/pinyin"
 )
 
+// Meaning of a chinese word, containing the pinyin pronunciation,
+// meanings, the HSK level of the word (0 means it is not in the HSK)
+// and simplified as well as traditional writing.
 type Meaning struct {
 	Pinyin      []cedict.Pinyin
 	Meanings    []string
@@ -22,10 +26,12 @@ type Meaning struct {
 //go:embed gen.bin
 var dict []byte
 
+// Main is the default dictionary, generated from CEDICT.
 var Main = Dict{
 	bin: dict,
 }
 
+// Dict is a dictionary, capable of looking up chinese words.
 type Dict struct {
 	bin []byte
 }
@@ -41,6 +47,8 @@ func decodeRune(dict []byte, x uint16) rune {
 	return rune(r)
 }
 
+// Lookup looks up a word in the dictionary. Returns the number of
+// characters consumed and every potential meaning.
 func (d *Dict) Lookup(
 	str []rune,
 ) (int, []Meaning) {
@@ -93,6 +101,7 @@ func isSoftMatch(r rune) bool {
 	return false
 }
 
+// Begin creates a new lookup process.
 func (d *Dict) Begin() Lookup {
 	// read the rune index length
 	runeIdxLen := uint24(d.bin)
@@ -103,6 +112,8 @@ func (d *Dict) Begin() Lookup {
 	}
 }
 
+// Lookup represents a lookup process that can be refined by adding
+// more characters.
 type Lookup struct {
 	dict     []byte
 	meanings int
@@ -113,6 +124,8 @@ func (l *Lookup) IsZero() bool {
 	return l.dict == nil
 }
 
+// Consume another character. Returns false if the lookup fails with
+// that additional character.
 func (cur *Lookup) Consume(c rune) bool {
 	// get the index length
 	l := binary.BigEndian.Uint16(cur.dict[cur.index:])
@@ -136,6 +149,8 @@ func (cur *Lookup) Consume(c rune) bool {
 	return true
 }
 
+// IsWord returns whether the current lookup is a word. If not, more
+// characters have to be added to make it a word.
 func (cur *Lookup) IsWord() bool {
 	if cur.meanings == -1 || cur.dict == nil {
 		return false
@@ -144,6 +159,8 @@ func (cur *Lookup) IsWord() bool {
 	return lenMeanings > 0
 }
 
+// Meanings returns the meanings of the current word. Needs to be
+// given all consumed characters.
 func (cur *Lookup) Meanings(word []rune) []Meaning {
 	if cur.meanings == -1 || cur.dict == nil {
 		return nil

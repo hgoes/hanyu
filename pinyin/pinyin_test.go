@@ -69,8 +69,8 @@ func TestParseMany(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.Input, func(t *testing.T) {
-			ok, result, rest := ParseMany([]rune(test.Input))
-			if !ok || len(rest) != 0 {
+			result, rest := ParseMany([]rune(test.Input))
+			if len(rest) != 0 {
 				t.Fatal("failed to parse")
 			}
 			if RenderMany(result) != test.Output {
