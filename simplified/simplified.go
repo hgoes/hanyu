@@ -1,8 +1,12 @@
-//go:generate go run ../cmd/gen-simp-trad
+// Convert traditional characters to simplified ones.
 package simplified
+
+//go:generate go run ../cmd/gen-simp-trad
 
 import "github.com/hgoes/hanyu/dict"
 
+// To converts all traditional characters in a string with simplified
+// ones.
 func To(from string) string {
 	runes := []rune(from)
 	if ToInplace(runes) {
@@ -11,6 +15,8 @@ func To(from string) string {
 	return from
 }
 
+// ToInplace converts all traditional characters in a slice with
+// simplified ones, updating the slice in-place.
 func ToInplace(from []rune) bool {
 	replaced := false
 	for len(from) > 0 {

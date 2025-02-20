@@ -1,3 +1,4 @@
+// Provides a parser for the CEDICT (https://www.mdbg.net) dictionary format
 package cedict
 
 import (
@@ -11,11 +12,14 @@ import (
 	"github.com/hgoes/hanyu/pinyin"
 )
 
+// Parser reads a CEDICT dictionary file entry by entry
 type Parser struct {
 	reader *bufio.Scanner
 	lineNr int
 }
 
+// New creates a new [Parser]. The source must be a gzip'ed
+// dictionary, containing a CEDICT entry in each line.
 func New(src io.Reader) (*Parser, error) {
 	rd, err := gzip.NewReader(src)
 	if err != nil {
@@ -30,6 +34,7 @@ var regEntry = regexp.MustCompile(`^([^ ]+) ([^ ]+) \[([^]]*)\] /+((:?[^/]+/?)+)
 
 var regMD = regexp.MustCompile(`^ *([^ =]+) *= *(.*)$`)
 
+// Next yields the next [Line] from the dictionary.
 func (p *Parser) Next() (Line, error) {
 	for {
 		if !p.reader.Scan() {

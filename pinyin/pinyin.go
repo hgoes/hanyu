@@ -1,5 +1,8 @@
-//go:generate go run ../cmd/gen-pinyin-parser
+// Handles pinyin, a phonetic writing system of chinese using the
+// latin alphabet.
 package pinyin
+
+//go:generate go run ../cmd/gen-pinyin-parser
 
 import (
 	"fmt"
@@ -8,12 +11,15 @@ import (
 	"unicode"
 )
 
+// Pinyin represents a sound + tone of a chinese character.
 type Pinyin uint16
 
 type parserState int
 
+// Sound is a unique sound used in a pinyin syllable.
 type Sound uint16
 
+// Tone adds a flat, rising, low or falling component to a sound.
 type Tone byte
 
 const (
@@ -24,14 +30,17 @@ const (
 	Falling Tone = 4
 )
 
+// New creates a new pinyin syllable.
 func New(p Sound, t Tone) Pinyin {
 	return Pinyin(uint16(t) + uint16(p)*5)
 }
 
+// Decode a pinyin into its components.
 func (p Pinyin) Decode() (Sound, Tone) {
 	return Sound(p / 5), Tone(p % 5)
 }
 
+// String renders a pinyin using diacritics.
 func (p Pinyin) String() string {
 	str, _ := p.render()
 	return str
@@ -365,6 +374,9 @@ func (p *parser) Result() (bool, Pinyin) {
 	return true, New(sound, p.Tone)
 }
 
+// Parse a single pinyin from a slice of runes. Returns false if no
+// pinyin could be parsed, otherwise true, the parsed pinyin and the
+// remaining slice of runes.
 func Parse(str []rune) (bool, Pinyin, []rune) {
 	var p parser
 	var lastIdx int
@@ -386,27 +398,31 @@ func Parse(str []rune) (bool, Pinyin, []rune) {
 	return true, lastResult, str[lastIdx:]
 }
 
-func ParseMany(str []rune) (bool, []Pinyin, []rune) {
+// ParseMany parses many runes until all runes are consumed, or a
+// parse error is encountered.
+func ParseMany(str []rune) ([]Pinyin, []rune) {
 	var result []Pinyin
 	for {
 		if len(str) == 0 {
-			return true, result, nil
+			return result, nil
 		}
 		ok, p, rest := Parse(str)
 		if !ok {
-			return false, result, rest
+			return result, rest
 		}
 		result = append(result, p)
 		str = rest
 	}
 }
 
+// RenderMany renders a slice of pinyins using diacritics.
 func RenderMany(ps []Pinyin) string {
 	var buf strings.Builder
 	RenderManyWriter(&buf, ps)
 	return buf.String()
 }
 
+// RenderManyWriter renders a slice of pinyins to a writer.
 func RenderManyWriter(w io.Writer, ps []Pinyin) (int, error) {
 	c := 0
 	for i, p := range ps {
